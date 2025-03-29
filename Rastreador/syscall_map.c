@@ -1,5 +1,13 @@
+/*
+ Tarea 2 - Sistemas Operativos
+
+ Nombre: William Gerardo Alfaro Quiros
+ Carné: 2022437996
+*/
+
 #include "syscall_map.h"
 
+// Lista de syscalls
 const char *syscall_names[] = {
     [0] = "read",
     [1] = "write",
