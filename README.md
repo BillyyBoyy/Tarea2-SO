@@ -70,5 +70,5 @@ Tarea2-SO/
 ├── README.md                # Instrucciones y explicación del proyecto
 └── Documentación/
     ├── 2022437996_tarea2.pdf       # Documento en PDF
-    ├── doc_fuente_latex            # Archivos fuente de la documentación en latex
+    ├── doc_fuente_latex.zip        # Archivos fuente de la documentación en latex
 ```
