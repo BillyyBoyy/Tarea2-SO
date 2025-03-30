@@ -39,20 +39,20 @@ int wait_key = 0; // Esperar tecla
  *   - prog_args: puntero a un arreglo donde se almacenarán los argumentos del programa.
  */
 
-void parse_args(int argc, char *argv[], char **prog, char ***prog_args) {
+void parse_args(int argc, char *argv[], char **prog, char ***prog_args) { // Función para analizar los argumentos
     int i;
-    for (i = 1; i < argc; i++) {
+    for (i = 1; i < argc; i++) { // Iterar sobre los argumentos
         if (strcmp(argv[i], "-v") == 0) {
             verbose = 1;
         } else if (strcmp(argv[i], "-V") == 0) {
-            verbose = 1;
-            wait_key = 1;
+            verbose = 1; // Modo detallado
+            wait_key = 1; // Esperar tecla
         } else {
             break;
         }
     }
-    *prog = argv[i];
-    *prog_args = &argv[i];
+    *prog = argv[i]; // Guardar el nombre del programa
+    *prog_args = &argv[i]; // Guardar los argumentos del programa
 }
 
 /*
@@ -65,43 +65,43 @@ void parse_args(int argc, char *argv[], char **prog, char ***prog_args) {
  * Parámetros:
  *   - pid: ID del proceso hijo a rastrear.
  */
-void trace_syscalls(pid_t pid) {
+void trace_syscalls(pid_t pid) { // Función para rastrear syscalls
     int status, syscall_num, in_syscall = 0;
-    unsigned long long count[MAX_SYSCALLS] = {0};
+    unsigned long long count[MAX_SYSCALLS] = {0}; // Contador de syscalls
 
     waitpid(pid, &status, 0);
-    ptrace(PTRACE_SETOPTIONS, pid, 0, PTRACE_O_TRACESYSGOOD);
+    ptrace(PTRACE_SETOPTIONS, pid, 0, PTRACE_O_TRACESYSGOOD); // Configurar opciones de ptrace
 
-    while (1) {
-        ptrace(PTRACE_SYSCALL, pid, 0, 0);
+    while (1) { 
+        ptrace(PTRACE_SYSCALL, pid, 0, 0); // Esperar syscall
         waitpid(pid, &status, 0);
         if (WIFSTOPPED(status) && WSTOPSIG(status) & 0x80) {
-            syscall_num = ptrace(PTRACE_PEEKUSER, pid, sizeof(long) * ORIG_RAX);
+            syscall_num = ptrace(PTRACE_PEEKUSER, pid, sizeof(long) * ORIG_RAX); // Obtener el número de syscall 
             if (syscall_num >= 0 && syscall_num < MAX_SYSCALLS) {
-                if (!in_syscall) {
-                    count[syscall_num]++;
-                    if (verbose && syscall_names[syscall_num]) {
+                if (!in_syscall) { 
+                    count[syscall_num]++; // Incrementar el contador
+                    if (verbose && syscall_names[syscall_num]) { // Mostrar información detallada
                         printf("Syscall: %s (%d)\n", syscall_names[syscall_num], syscall_num);
-                        if (wait_key) {
+                        if (wait_key) { // Esperar tecla
                             printf("Presione una tecla para continuar...");
                             getchar();
                         }
                     }
-                    in_syscall = 1;
+                    in_syscall = 1; // Indicar que estamos dentro de una syscall
                 } else {
                     in_syscall = 0;
                 }
             }
-        } else if (WIFEXITED(status)) {
+        } else if (WIFEXITED(status)) { // Proceso hijo ha terminado
             break;
         }
     }
 
     // Mostrar resumen
     printf("\nResumen de Syscalls:\n");
-    for (int i = 0; i < MAX_SYSCALLS; i++) {
+    for (int i = 0; i < MAX_SYSCALLS; i++) { // Mostrar resumen de syscalls
         if (count[i] > 0 && syscall_names[i]) {
-            printf("%-20s: %llu\n", syscall_names[i], count[i]);
+            printf("%-20s: %llu\n", syscall_names[i], count[i]); // Mostrar el nombre y el contador
         }
     }
 }
@@ -120,25 +120,25 @@ void trace_syscalls(pid_t pid) {
  *   - 0 si se ejecuta correctamente, 1 en caso de error.
  */
 int main(int argc, char *argv[]) {
-    if (argc < 2) {
-        fprintf(stderr, "Uso: %s [-v|-V] Prog [opciones de Prog]\n", argv[0]);
+    if (argc < 2) { // Verificar si hay suficientes argumentos
+        fprintf(stderr, "Uso: %s [-v|-V] Prog [opciones de Prog]\n", argv[0]); // Mostrar uso
         return 1;
     }
 
-    char *prog;
-    char **prog_args;
+    char *prog; // Nombre del programa
+    char **prog_args; // Argumentos del programa
     parse_args(argc, argv, &prog, &prog_args);
 
-    pid_t pid = fork();
+    pid_t pid = fork(); // Crear un nuevo proceso
     if (pid == 0) {
         // Proceso hijo
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
-        execvp(prog, prog_args);
+        ptrace(PTRACE_TRACEME, 0, NULL, NULL); // Permitir que el padre rastree este proceso
+        execvp(prog, prog_args); // Ejecutar el programa
         perror("execvp");
-        exit(1);
+        exit(1); // Salir si hay error
     } else {
         // Proceso padre
         trace_syscalls(pid);
     }
-    return 0;
+    return 0; 
 }
